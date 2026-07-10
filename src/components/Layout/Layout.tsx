@@ -52,10 +52,10 @@ export default function Layout() {
               className="h-10 w-auto object-contain" 
             />
             <div className="flex flex-col select-none">
-              <span className="text-[15px] font-bold tracking-wide leading-none text-gray-900 dark:text-white uppercase font-sans">
+              <span className="text-[15px] font-semibold tracking-[1px] leading-tight text-gray-900 dark:text-white font-['Orbitron',sans-serif]">
                 Technozi Haiti
               </span>
-              <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 tracking-wider uppercase mt-1">
+              <span className="text-[8px] font-medium text-cyan-600 dark:text-cyan-400 tracking-[3px] leading-none uppercase font-sans mt-1">
                 Faster and Easier
               </span>
             </div>

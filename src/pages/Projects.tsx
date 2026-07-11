@@ -14,9 +14,10 @@ type Project = {
   image_url: string;
 };
 
-// Type de formulaire pour gérer 'technologies' comme une chaîne texte
 type ProjectForm = Omit<Project, 'technologies'> & {
-  technologies_string: string;
+  category: string;
+  client: string;
+  date: string;
 };
 
 export default function Projects() {
@@ -48,11 +49,13 @@ export default function Projects() {
       setEditingId(project.id);
       reset({
         ...project,
-        technologies_string: project.technologies ? project.technologies.join(', ') : ''
+        category: project.technologies?.[0] || 'Solar',
+        client: project.technologies?.[1] || '',
+        date: project.technologies?.[2] || ''
       });
     } else {
       setEditingId(null);
-      reset({ title: '', description: '', technologies_string: '', link: '', image_url: '' });
+      reset({ title: '', description: '', category: 'Solar', client: '', date: '', link: '', image_url: '' });
     }
     setIsFormOpen(true);
   };
@@ -63,14 +66,9 @@ export default function Projects() {
   };
 
   const onSubmit = async (data: ProjectForm) => {
-    const { id, technologies_string, ...rest } = data;
+    const { id, category, client, date, ...rest } = data;
     
-    // Convertir la chaîne en tableau
-    const technologies = technologies_string
-      .split(',')
-      .map(tech => tech.trim())
-      .filter(tech => tech.length > 0);
-
+    const technologies = [category, client, date];
     const projectData = { ...rest, technologies };
     let error;
 
@@ -137,13 +135,24 @@ export default function Projects() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Technologies utilisées (séparées par des virgules)</label>
-              <input {...register('technologies_string')} placeholder="ex: React, Node.js, Tailwind CSS" className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2 border" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+              <select {...register('category')} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2 border bg-white">
+                <option value="Solar">Solar</option>
+                <option value="Starlink">Starlink</option>
+                <option value="CCTV">CCTV</option>
+                <option value="Networking">Networking</option>
+                <option value="Office Installations">Office Installations</option>
+              </select>
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Lien du projet (URL)</label>
-              <input type="url" {...register('link')} placeholder="https://..." className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2 border" />
+            <div className="sm:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
+              <input {...register('client')} placeholder="ex: Entreprise XYZ" className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2 border" />
+            </div>
+
+            <div className="sm:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input {...register('date')} placeholder="ex: Mars 2026" className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2 border" />
             </div>
 
             <div className="sm:col-span-2">
@@ -203,17 +212,21 @@ export default function Projects() {
                 </div>
                 <p className="text-sm text-gray-500 mt-2 line-clamp-2">{project.description}</p>
                 <div className="mt-4 flex flex-wrap gap-1">
-                  {project.technologies?.map((tech, idx) => (
-                    <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800">
-                      {tech}
-                    </span>
-                  ))}
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded border border-gray-200 text-xs font-medium bg-gray-50 text-gray-600">
+                    {project.technologies?.[0]}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded border border-gray-200 text-xs font-medium bg-gray-50 text-gray-600">
+                    {project.technologies?.[1]}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded border border-gray-200 text-xs font-medium bg-gray-50 text-gray-600">
+                    {project.technologies?.[2]}
+                  </span>
                 </div>
                 <div className="mt-auto pt-4 flex space-x-2 border-t border-gray-100 mt-4">
-                  <button onClick={() => openForm(project)} className="flex-1 flex justify-center items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                  <button onClick={() => openForm(project)} className="flex-1 flex justify-center items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                     <Edit2 className="w-4 h-4 mr-1.5" /> Modifier
                   </button>
-                  <button onClick={() => handleDelete(project.id)} className="flex-1 flex justify-center items-center px-3 py-1.5 border border-transparent rounded-md text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200">
+                  <button onClick={() => handleDelete(project.id)} className="flex-1 flex justify-center items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-red-600 bg-white hover:bg-red-50 hover:border-red-200 transition-colors">
                     <Trash2 className="w-4 h-4 mr-1.5" /> Supprimer
                   </button>
                 </div>

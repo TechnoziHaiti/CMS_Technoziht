@@ -118,10 +118,6 @@ export default function Services() {
               <textarea required {...register('description')} rows={4} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2 border" />
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nom de l'icône (Lucide React)</label>
-              <input {...register('icon')} placeholder="ex: Code, Monitor, Smartphone" className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2 border" />
-            </div>
 
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Image illustrative</label>
@@ -176,10 +172,10 @@ export default function Services() {
                     </div>
                   </div>
                   <div className="flex space-x-3">
-                    <button onClick={() => openForm(service)} className="text-indigo-600 hover:text-indigo-900 p-2 rounded-full hover:bg-indigo-50">
+                    <button onClick={() => openForm(service)} className="text-gray-500 hover:text-gray-900 p-2 rounded-full hover:bg-gray-100 transition-colors">
                       <Edit2 className="w-5 h-5" />
                     </button>
-                    <button onClick={() => handleDelete(service.id)} className="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50">
+                    <button onClick={() => handleDelete(service.id)} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors">
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>

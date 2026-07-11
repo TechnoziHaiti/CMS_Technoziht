@@ -33,7 +33,11 @@ export default function Login() {
       });
 
       if (error) {
-        toast.error(error.message);
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('Mot de passe ou email incorrect');
+        } else {
+          toast.error(error.message);
+        }
       } else {
         toast.success('Connexion réussie');
         navigate('/');

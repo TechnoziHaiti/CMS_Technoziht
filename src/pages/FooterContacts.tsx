@@ -140,8 +140,8 @@ export default function FooterContacts() {
         {/* Telephone Card */}
         <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
-              <Phone className="w-5 h-5" />
+            <div className="text-gray-900">
+              <Phone className="w-6 h-6" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Numéros de téléphone</h2>
@@ -166,8 +166,8 @@ export default function FooterContacts() {
         {/* Email Card */}
         <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
-              <Mail className="w-5 h-5" />
+            <div className="text-gray-900">
+              <Mail className="w-6 h-6" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Adresse Email</h2>
@@ -191,8 +191,8 @@ export default function FooterContacts() {
         {/* Social Links Card */}
         <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-8">
-            <div className="p-2.5 bg-cyan-50 text-cyan-600 rounded-xl">
-              <Globe className="w-5 h-5" />
+            <div className="text-gray-900">
+              <Globe className="w-6 h-6" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Réseaux Sociaux</h2>

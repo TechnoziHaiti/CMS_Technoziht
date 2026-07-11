@@ -31,10 +31,9 @@ export default function Layout() {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Accueil', path: '/home', icon: Home },
     { name: 'Services', path: '/services', icon: Briefcase },
-    { name: 'Projets', path: '/projects', icon: FolderGit2 },
+    { name: 'Réalisations', path: '/projects', icon: FolderGit2 },
     { name: 'Produits', path: '/products', icon: Package },
     { name: 'Témoignages', path: '/testimonials', icon: MessageSquareQuote },
-    { name: 'Messages', path: '/messages', icon: Mail },
     { name: 'Pied de page', path: '/footer', icon: AppWindow },
     { name: 'Paramètres', path: '/settings', icon: Settings },
   ];

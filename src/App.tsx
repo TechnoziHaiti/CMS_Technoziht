@@ -10,7 +10,6 @@ import Services from './pages/Services';
 import Projects from './pages/Projects';
 import Products from './pages/Products';
 import Testimonials from './pages/Testimonials';
-import Messages from './pages/Messages';
 import UpdatePassword from './pages/UpdatePassword';
 
 function App() {
@@ -30,7 +29,6 @@ function App() {
             <Route path="/projects" element={<Projects />} />
             <Route path="/products" element={<Products />} />
             <Route path="/testimonials" element={<Testimonials />} />
-            <Route path="/messages" element={<Messages />} />
           </Route>
         </Route>
       </Routes>

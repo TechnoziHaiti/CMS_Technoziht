@@ -1,29 +1,46 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { Briefcase, FolderGit2, Mail, Loader2, ArrowRight } from 'lucide-react';
+import { supabase, supabaseAdmin } from '../lib/supabase';
+import { Briefcase, FolderGit2, Mail, Loader2, ArrowRight, Package, MessageSquareQuote, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
     services: 0,
     projects: 0,
-    unreadMessages: 0,
+    products: 0,
+    testimonials: 0,
+    users: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        const [servicesRes, projectsRes, messagesRes] = await Promise.all([
+        const [servicesRes, projectsRes, productsRes, testimonialsRes] = await Promise.all([
           supabase.from('services').select('id', { count: 'exact' }),
           supabase.from('projects').select('id', { count: 'exact' }),
-          supabase.from('messages').select('id', { count: 'exact' }).eq('status', false)
+          supabase.from('products').select('id', { count: 'exact' }),
+          supabase.from('testimonials').select('id', { count: 'exact' })
         ]);
+
+        let usersCount = 1;
+        if (supabaseAdmin) {
+          try {
+            const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+            if (data?.users) {
+              usersCount = data.users.length;
+            }
+          } catch (e) {
+            console.error('Error fetching users:', e);
+          }
+        }
 
         setStats({
           services: servicesRes.count || 0,
           projects: projectsRes.count || 0,
-          unreadMessages: messagesRes.count || 0,
+          products: productsRes.count || 0,
+          testimonials: testimonialsRes.count || 0,
+          users: usersCount
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -44,9 +61,11 @@ export default function Dashboard() {
   }
 
   const cards = [
-    { name: 'Services', count: stats.services, icon: Briefcase, color: 'text-gray-700 bg-gray-100', link: '/services' },
-    { name: 'Projets', count: stats.projects, icon: FolderGit2, color: 'text-gray-700 bg-gray-100', link: '/projects' },
-    { name: 'Messages non lus', count: stats.unreadMessages, icon: Mail, color: 'text-gray-700 bg-gray-100', link: '/messages' },
+    { name: 'Services', count: stats.services, icon: Briefcase, color: 'text-blue-600', link: '/services' },
+    { name: 'Réalisations', count: stats.projects, icon: FolderGit2, color: 'text-indigo-600', link: '/projects' },
+    { name: 'Produits', count: stats.products, icon: Package, color: 'text-emerald-600', link: '/products' },
+    { name: 'Témoignages', count: stats.testimonials, icon: MessageSquareQuote, color: 'text-amber-500', link: '/testimonials' },
+    { name: 'Comptes Admin', count: stats.users, icon: Users, color: 'text-purple-600', link: '/settings' },
   ];
 
   return (
@@ -62,7 +81,7 @@ export default function Dashboard() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className={`p-1 ${card.color.replace('bg-gray-100', '')}`}>
+                  <div className={card.color}>
                     <card.icon className="h-7 w-7" aria-hidden="true" />
                   </div>
                 </div>

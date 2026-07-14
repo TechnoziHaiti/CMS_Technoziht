@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Plus, Edit2, Trash2, Loader2, ArrowLeft, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, ArrowLeft, Package, Sparkles } from 'lucide-react';
 import ImageUpload from '../components/ui/ImageUpload';
 
 type Product = {
@@ -13,11 +13,36 @@ type Product = {
   image_url: string;
   category: string;
   discount_percentage?: number;
+  discount_end_date?: string | null;
 };
 
 type ProductFormData = Product & {
   price_amount: string;
   currency: string;
+};
+
+const getDiscountStatus = (discount_percentage?: number, discount_end_date?: string | null) => {
+  if (!discount_percentage || discount_percentage <= 0) {
+    return { isActive: false };
+  }
+  if (!discount_end_date) {
+    return { isActive: true };
+  }
+  
+  const dateParts = discount_end_date.split('T')[0].split('-');
+  const end = new Date(
+    parseInt(dateParts[0]), 
+    parseInt(dateParts[1]) - 1, 
+    parseInt(dateParts[2]), 
+    23, 59, 59, 999
+  );
+  const now = new Date();
+  
+  if (end.getTime() - now.getTime() < 0) {
+    return { isActive: false };
+  }
+  
+  return { isActive: true };
 };
 
 export default function Products() {
@@ -26,8 +51,9 @@ export default function Products() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isDiscountEnabled, setIsDiscountEnabled] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const { register, handleSubmit, reset, setValue, watch } = useForm<ProductFormData>();
+  const { register, handleSubmit, reset, setValue, watch, getValues } = useForm<ProductFormData>();
   const imageUrl = watch('image_url');
 
   const fetchProducts = async () => {
@@ -55,11 +81,13 @@ export default function Products() {
       const amount = match ? match[1].trim() : product.price;
       const isUSD = match ? (match[2].toUpperCase().includes('U') || match[2] === '$') : false;
       
-      reset({ ...product, price_amount: amount, currency: isUSD ? 'USD' : 'HTG' } as ProductFormData);
+      const formattedDate = product.discount_end_date ? new Date(product.discount_end_date).toISOString().split('T')[0] : '';
+      
+      reset({ ...product, price_amount: amount, currency: isUSD ? 'USD' : 'HTG', discount_end_date: formattedDate } as ProductFormData);
     } else {
       setEditingId(null);
       setIsDiscountEnabled(false);
-      reset({ title: '', description: '', price: '', price_amount: '', currency: 'HTG', image_url: '', category: '', discount_percentage: 0 });
+      reset({ title: '', description: '', price: '', price_amount: '', currency: 'HTG', image_url: '', category: 'Équipements Réseau & Wi-Fi', discount_percentage: 0, discount_end_date: '' });
     }
     setIsFormOpen(true);
   };
@@ -77,6 +105,9 @@ export default function Products() {
     
     if (!isDiscountEnabled) {
       productData.discount_percentage = 0;
+      productData.discount_end_date = null;
+    } else if (!productData.discount_end_date) {
+      productData.discount_end_date = null;
     }
 
     let error;
@@ -96,6 +127,40 @@ export default function Products() {
       toast.success(editingId ? 'Produit modifié' : 'Produit ajouté');
       closeForm();
       fetchProducts();
+    }
+  };
+
+  const generateDescription = async () => {
+    const { title, category, image_url } = getValues();
+    
+    if (!title) {
+      toast.error("Veuillez d'abord saisir le titre du produit.");
+      return;
+    }
+
+    setIsGenerating(true);
+    const loadingToast = toast.loading("L'IA analyse votre produit et rédige la description...");
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+      const response = await fetch(`${apiUrl}/api/generate-description`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, category, imageUrl: image_url })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors de la génération");
+      }
+      
+      setValue('description', data.description, { shouldValidate: true, shouldDirty: true });
+      toast.success("Description générée avec succès !", { id: loadingToast });
+    } catch (error: any) {
+      toast.error(error.message || "Impossible de contacter l'IA", { id: loadingToast });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -151,12 +216,33 @@ export default function Products() {
             
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-              <input {...register('category')} placeholder="Ex: Logiciels, Équipements..." className="w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm p-2 border" />
+              <select {...register('category')} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm p-2 border bg-white">
+                <option value="Électroménager">Électroménager</option>
+                <option value="Énergie Solaire">Énergie Solaire</option>
+                <option value="Équipements de Maison">Équipements de Maison</option>
+                <option value="Équipements Réseau & Wi-Fi">Équipements Réseau & Wi-Fi</option>
+                <option value="Kits Internet (Starlink)">Kits Internet (Starlink)</option>
+                <option value="Vidéosurveillance & Sécurité">Vidéosurveillance & Sécurité</option>
+                <option value="Ordinateurs & Laptops">Ordinateurs & Laptops</option>
+                <option value="Accessoires Informatiques">Accessoires Informatiques</option>
+                <option value="Outils Mécanique">Outils Mécanique</option>
+              </select>
             </div>
 
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea {...register('description')} rows={4} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm p-2 border" />
+              <div className="relative">
+                <textarea {...register('description')} rows={5} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm p-2 border pb-10" />
+                <button
+                  type="button"
+                  onClick={generateDescription}
+                  disabled={isGenerating}
+                  className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  {isGenerating ? "Génération..." : "Générer avec l'IA"}
+                </button>
+              </div>
             </div>
 
             {editingId && (
@@ -177,16 +263,26 @@ export default function Products() {
                 </div>
                 
                 {isDiscountEnabled && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pourcentage de réduction (%)</label>
-                    <input 
-                      type="number" 
-                      min="1" 
-                      max="100" 
-                      {...register('discount_percentage', { valueAsNumber: true })} 
-                      placeholder="Ex: 20" 
-                      className="w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm p-2 border" 
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Pourcentage de réduction (%)</label>
+                      <input 
+                        type="number" 
+                        min="1" 
+                        max="100" 
+                        {...register('discount_percentage', { valueAsNumber: true })} 
+                        placeholder="Ex: 20" 
+                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm p-2 border bg-white text-gray-900" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date de fin (Optionnel)</label>
+                      <input 
+                        type="date" 
+                        {...register('discount_end_date')} 
+                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm p-2 border bg-white text-gray-900" 
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -223,56 +319,76 @@ export default function Products() {
         </button>
       </div>
 
-      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
-        <ul className="divide-y divide-gray-200">
-          {products.length === 0 ? (
-            <li className="p-10 text-center text-gray-500 flex flex-col items-center">
-              <Package className="w-10 h-10 text-gray-300 mb-3" />
-              <p>Aucun produit dans le catalogue.</p>
-            </li>
-          ) : (
-            products.map((product) => (
-              <li key={product.id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    {product.image_url ? (
-                      <img src={product.image_url} alt="" className="h-16 w-16 rounded-lg object-cover bg-gray-100 border border-gray-200" />
-                    ) : (
-                      <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200">
-                        <Package className="w-6 h-6" />
-                      </div>
-                    )}
-                    <div className="ml-4">
-                      <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                        {product.title}
-                        {product.category && (
-                          <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-normal border border-gray-200">
-                            {product.category}
-                          </span>
-                        )}
-                        {product.discount_percentage ? (
-                          <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-xs font-bold border border-red-200">
-                            -{product.discount_percentage}%
-                          </span>
-                        ) : null}
-                      </h3>
-                      <p className="text-sm font-semibold text-gray-900 mt-1">{product.price}</p>
-                      <p className="text-sm text-gray-500 line-clamp-1 max-w-xl mt-0.5">{product.description}</p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-3">
-                    <button onClick={() => openForm(product)} className="text-gray-500 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                      <Edit2 className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => handleDelete(product.id)} className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors">
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {products.length === 0 ? (
+          <div className="col-span-full p-10 text-center text-gray-500 bg-white shadow rounded-xl border border-gray-100 flex flex-col items-center justify-center">
+            <Package className="w-10 h-10 text-gray-300 mb-3" />
+            <p>Aucun produit dans le catalogue.</p>
+          </div>
+        ) : (
+          products.map((product) => (
+            <div key={product.id} className="bg-white overflow-hidden shadow rounded-xl border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+              {product.image_url ? (
+                <div className="relative">
+                  <img src={product.image_url} alt={product.title} className="h-48 w-full object-cover" />
+                  {(() => {
+                    const status = getDiscountStatus(product.discount_percentage, product.discount_end_date);
+                    if (status.isActive && product.discount_percentage) {
+                      return (
+                        <span className="absolute top-2 right-2 px-2 py-1 rounded-md bg-red-500 text-white text-xs font-bold shadow-sm">
+                          -{product.discount_percentage}%
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
+                  {product.category && (
+                    <span className="absolute top-2 left-2 px-2 py-1 rounded-md bg-white/90 text-gray-800 text-xs font-medium shadow-sm backdrop-blur-sm">
+                      {product.category}
+                    </span>
+                  )}
                 </div>
-              </li>
-            ))
-          )}
-        </ul>
+              ) : (
+                <div className="h-48 w-full bg-gray-100 flex flex-col items-center justify-center text-gray-400 relative">
+                  <Package className="w-10 h-10 mb-2 opacity-50" />
+                  <span className="text-sm">Pas d'image</span>
+                  {(() => {
+                    const status = getDiscountStatus(product.discount_percentage, product.discount_end_date);
+                    if (status.isActive && product.discount_percentage) {
+                      return (
+                        <span className="absolute top-2 right-2 px-2 py-1 rounded-md bg-red-500 text-white text-xs font-bold shadow-sm">
+                          -{product.discount_percentage}%
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
+                  {product.category && (
+                    <span className="absolute top-2 left-2 px-2 py-1 rounded-md bg-white/90 text-gray-800 text-xs font-medium shadow-sm backdrop-blur-sm">
+                      {product.category}
+                    </span>
+                  )}
+                </div>
+              )}
+              <div className="p-5 flex-1 flex flex-col">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-lg font-bold text-gray-900 truncate pr-2">{product.title}</h3>
+                </div>
+                <p className="text-lg font-black text-gray-900 mt-1">{product.price}</p>
+                <p className="text-sm text-gray-500 mt-2 line-clamp-3 flex-1">{product.description}</p>
+                
+                <div className="mt-auto pt-4 flex space-x-2 border-t border-gray-100 mt-4">
+                  <button onClick={() => openForm(product)} className="flex-1 flex justify-center items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <Edit2 className="w-4 h-4 mr-1.5" /> Modifier
+                  </button>
+                  <button onClick={() => handleDelete(product.id)} className="flex-1 flex justify-center items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-red-600 bg-white hover:bg-red-50 hover:border-red-200 transition-colors">
+                    <Trash2 className="w-4 h-4 mr-1.5" /> Supprimer
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

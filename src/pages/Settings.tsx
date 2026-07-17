@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 import {
   Loader2, Trash2, AlertCircle, Pencil, X, Shield, ShieldCheck,
-  KeyRound, Eye, EyeOff, Check, UserPlus, Users, Moon, Sun,
+  KeyRound, Eye, EyeOff, Check, UserPlus, Moon, Sun,
   LayoutDashboard, Home, Briefcase, FolderGit2, Package,
   ShoppingBag, MessageSquareQuote, AppWindow, Mail, Crown, ChevronDown, ChevronUp
 } from 'lucide-react';
@@ -321,8 +321,8 @@ export default function SettingsPage() {
                           {isSelf && <span className="text-[10px] font-medium text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">vous</span>}
                           {uIsSuperAdmin ? <SuperAdminBadge /> : <AdminBadge />}
                         </div>
-                        {u.user_metadata?.full_name && (
-                          <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mt-0.5">{u.user_metadata.full_name}</p>
+                        {(u.user_metadata as any)?.full_name && (
+                          <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mt-0.5">{(u.user_metadata as any).full_name}</p>
                         )}
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                           Ajouté le {new Date(u.created_at).toLocaleDateString('fr-FR')}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { Loader2, Save, Phone, AlertCircle, Globe, Mail } from 'lucide-react';
+import { Loader2, Save, Phone, Globe, Mail } from 'lucide-react';
 
 const FacebookIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

@@ -26,29 +26,7 @@ type ProductFormData = Product & {
   currency: string;
 };
 
-const getDiscountStatus = (discount_percentage?: number, discount_end_date?: string | null) => {
-  if (!discount_percentage || discount_percentage <= 0) {
-    return { isActive: false };
-  }
-  if (!discount_end_date) {
-    return { isActive: true };
-  }
-  
-  const dateParts = discount_end_date.split('T')[0].split('-');
-  const end = new Date(
-    parseInt(dateParts[0]), 
-    parseInt(dateParts[1]) - 1, 
-    parseInt(dateParts[2]), 
-    23, 59, 59, 999
-  );
-  const now = new Date();
-  
-  if (end.getTime() - now.getTime() < 0) {
-    return { isActive: false };
-  }
-  
-  return { isActive: true };
-};
+
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);

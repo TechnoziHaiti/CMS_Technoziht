@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabaseAdmin, supabase } from '../lib/supabase';
+import { supabaseAdmin } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { 
   Users, 
@@ -38,13 +38,13 @@ type Technician = {
 type ViewMode = 'LIST' | 'FORM' | 'DETAILS';
 
 export default function Technicians() {
-  const { user } = useAuth();
+  const { } = useAuth();
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('LIST');
   const [selectedTech, setSelectedTech] = useState<Technician | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDept, setFilterDept] = useState('ALL');
+  const [filterDept] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
 
   // Stats and History for Details View

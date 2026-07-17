@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabaseAdmin, supabase } from '../lib/supabase';
+
 import toast from 'react-hot-toast';
-import { Loader2, CheckCircle, Clock, XCircle, ExternalLink, Package, Search, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, ExternalLink, Package, Search, RefreshCw } from 'lucide-react';
 
 type Order = {
   id: string;

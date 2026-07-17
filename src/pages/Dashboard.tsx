@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { supabase, supabaseAdmin } from '../lib/supabase';
+import { supabaseAdmin } from '../lib/supabase';
 import { Briefcase, FolderGit2, Loader2, ArrowRight, Package, MessageSquareQuote, Users, User, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
+  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
   BarChart, Bar, Cell 
 } from 'recharts';
 

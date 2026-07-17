@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
 import {
-  Mail, CheckCircle, Search, RefreshCw, Eye, MessageSquare,
-  AlertCircle, Trash2, X, UserPlus, Loader2, Send, ChevronLeft,
-  Phone, Calendar, Tag, User, Briefcase, MapPin, Clock, ArrowRight
+  Mail, CheckCircle, Search, RefreshCw, MessageSquare,
+  Trash2, X, UserPlus, Loader2, Send, ChevronLeft,
+  Phone, Calendar, Tag
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 

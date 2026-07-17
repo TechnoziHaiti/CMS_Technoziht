@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import toast from 'react-hot-toast';
-import { Loader2, CheckCircle, XCircle, ExternalLink, Package, Search, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, ExternalLink, Package, Search, RefreshCw, Clock } from 'lucide-react';
 
 type Order = {
   id: string;
@@ -425,7 +425,16 @@ export default function Orders() {
                         Voir le reçu
                       </a>
                     ) : (
-                      <p className="flex-1 flex justify-center items-center px-3 py-2 text-[13px] text-gray-400 italic text-center whitespace-nowrap">Aucun reçu uploadé.</p>
+                      <div className="flex-1 flex justify-center items-center px-3 py-2 text-[13px] text-gray-500 bg-gray-50 border border-gray-100 rounded-lg italic text-center whitespace-nowrap">
+                        {order.status === 'PAYMENT_PENDING' ? (
+                           <>
+                             <Clock className="w-3.5 h-3.5 mr-1.5 text-gray-400" />
+                             En attente du client...
+                           </>
+                        ) : (
+                           "Aucun reçu uploadé."
+                        )}
+                      </div>
                     )}
 
                     {order.status === 'PAYMENT_PENDING' && (

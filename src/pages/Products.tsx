@@ -352,8 +352,8 @@ export default function Products() {
                   <div className="relative h-48">
                     <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
                     {!isAvailable && (
-                      <div className="absolute inset-0 bg-white dark:bg-gray-800/60 backdrop-blur-sm flex items-center justify-center">
-                        <span className="bg-red-500 text-white font-bold px-3 py-1 rounded-full text-xs">Rupture</span>
+                      <div className="absolute inset-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-[2px] flex items-center justify-center">
+                        <span className="bg-red-500 text-white font-bold px-3 py-1 rounded-full text-xs shadow-sm">Rupture</span>
                       </div>
                     )}
                     {(product.discount_percentage || 0) > 0 && (

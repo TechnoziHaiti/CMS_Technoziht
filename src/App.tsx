@@ -9,8 +9,11 @@ import HomeContent from './pages/HomeContent';
 import Services from './pages/Services';
 import Projects from './pages/Projects';
 import Products from './pages/Products';
+import Orders from './pages/Orders';
 import Testimonials from './pages/Testimonials';
 import UpdatePassword from './pages/UpdatePassword';
+import Messages from './pages/Messages';
+import Technicians from './pages/Technicians';
 
 function App() {
   return (
@@ -28,6 +31,9 @@ function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/technicians" element={<Technicians />} />
             <Route path="/testimonials" element={<Testimonials />} />
           </Route>
         </Route>

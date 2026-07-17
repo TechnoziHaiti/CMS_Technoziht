@@ -113,7 +113,7 @@ export default function Projects() {
   if (isFormOpen) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-2xl font-bold text-gray-900">
             {editingId ? 'Modifier le projet' : 'Ajouter un projet'}
           </h1>
@@ -165,7 +165,7 @@ export default function Projects() {
             <button type="button" onClick={closeForm} className="mr-3 px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
               Annuler
             </button>
-            <button type="submit" className="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+            <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm">
               {editingId ? 'Mettre à jour' : 'Créer'}
             </button>
           </div>
@@ -176,13 +176,13 @@ export default function Projects() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Projets / Portfolio</h1>
           <p className="mt-1 text-sm text-gray-500">Gérez vos réalisations et études de cas.</p>
         </div>
-        <button onClick={() => openForm()} className="flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
-          <Plus className="w-4 h-4 mr-2" /> Ajouter un projet
+        <button onClick={() => openForm()} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium">
+          <Plus className="w-4 h-4" /> Ajouter un projet
         </button>
       </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 
 import toast from 'react-hot-toast';
 import { Loader2, CheckCircle, XCircle, ExternalLink, Package, Search, RefreshCw } from 'lucide-react';
@@ -70,7 +70,7 @@ export default function Orders() {
   }, []);
 
   const handleConfirmPayment = async (orderId: string) => {
-    if (!window.confirm("Êtes-vous sûr que le paiement a été reçu ? Cette action déduira le stock définitivement, et enverra une facture PDF au client.")) return;
+    if (!window.confirm("ÃŠtes-vous sÃ»r que le paiement a Ã©tÃ© reÃ§u ? Cette action dÃ©duira le stock dÃ©finitivement, et enverra une facture PDF au client.")) return;
     
     setProcessingId(orderId);
     try {
@@ -91,7 +91,7 @@ export default function Orders() {
         const { error } = await directAdminClient.rpc('confirm_payment', { p_order_id: orderId, p_admin_id: null });
         if (error) throw error;
         
-        toast.success("Validé! (Email non envoyé : le backend n'est pas à jour)");
+        toast.success("ValidÃ©! (Email non envoyÃ© : le backend n'est pas Ã  jour)");
         fetchOrders();
         return;
       }
@@ -99,7 +99,7 @@ export default function Orders() {
       const json = await res.json();
       if (!json.success) throw new Error(json.error || "Erreur serveur");
       
-      toast.success("Commande validée et facture envoyée au client !");
+      toast.success("Commande validÃ©e et facture envoyÃ©e au client !");
       fetchOrders();
     } catch (error: any) {
       toast.error(error.message || "Erreur de validation");
@@ -109,7 +109,7 @@ export default function Orders() {
   };
 
   const handleRejectProof = async (orderId: string) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir signaler cette preuve de paiement comme anormale et annuler la commande ? Le client sera alerté par email.")) return;
+    if (!window.confirm("ÃŠtes-vous sÃ»r de vouloir signaler cette preuve de paiement comme anormale et annuler la commande ? Le client sera alertÃ© par email.")) return;
     
     setProcessingId(orderId);
     try {
@@ -142,16 +142,16 @@ export default function Orders() {
         if (updateErr) throw updateErr;
 
         if (!updatedOrders || updatedOrders.length === 0) {
-          toast.error("Action refusée : commande déjà traitée par un autre admin (course perdue).");
+          toast.error("Action refusÃ©e : commande dÃ©jÃ  traitÃ©e par un autre admin (course perdue).");
           fetchOrders();
           return;
         }
 
-        // 2. Récupérer les articles de la commande
+        // 2. RÃ©cupÃ©rer les articles de la commande
         const { data: items, error: fetchError } = await directAdminClient.from('order_items').select('product_id, quantity').eq('order_id', orderId);
         if (fetchError) throw fetchError;
 
-        // 3. Libérer le stock réservé de manière sécurisée (OCC - Optimistic Concurrency Control)
+        // 3. LibÃ©rer le stock rÃ©servÃ© de maniÃ¨re sÃ©curisÃ©e (OCC - Optimistic Concurrency Control)
         if (items) {
           for (const item of items) {
             let success = false;
@@ -180,7 +180,7 @@ export default function Orders() {
           }
         }
         
-        toast.success("Commande annulée et stock libéré ! (Email non envoyé : backend injoignable)");
+        toast.success("Commande annulÃ©e et stock libÃ©rÃ© ! (Email non envoyÃ© : backend injoignable)");
         fetchOrders();
         return;
       }
@@ -188,7 +188,7 @@ export default function Orders() {
       const json = await res.json();
       if (!json.success) throw new Error(json.error || "Erreur serveur");
       
-      toast.success("Preuve rejetée, commande annulée et email envoyé au client !");
+      toast.success("Preuve rejetÃ©e, commande annulÃ©e et email envoyÃ© au client !");
       fetchOrders();
     } catch (error: any) {
       toast.error(error.message || "Erreur lors du rejet de la preuve");
@@ -198,7 +198,7 @@ export default function Orders() {
   };
 
   const handleRestoreOrder = async (orderId: string) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir restaurer cette commande ? Si le stock est inférieur à la demande, la commande sera partiellement validée.")) return;
+    if (!window.confirm("ÃŠtes-vous sÃ»r de vouloir restaurer cette commande ? Si le stock est infÃ©rieur Ã  la demande, la commande sera partiellement validÃ©e.")) return;
     
     setProcessingId(orderId);
     try {
@@ -220,9 +220,9 @@ export default function Orders() {
         if (error) throw error;
         
         if (data && data.is_partial) {
-          toast.success("Commande partiellement restaurée ! (Stock incomplet). Le prix a été recalculé.", { duration: 6000 });
+          toast.success("Commande partiellement restaurÃ©e ! (Stock incomplet). Le prix a Ã©tÃ© recalculÃ©.", { duration: 6000 });
         } else {
-          toast.success("Commande restaurée à 100% !");
+          toast.success("Commande restaurÃ©e Ã  100% !");
         }
         fetchOrders();
         return;
@@ -232,13 +232,13 @@ export default function Orders() {
       if (!json.success) throw new Error(json.error || "Erreur serveur");
       
       if (json.is_partial) {
-        toast.success("Commande partiellement restaurée ! Le client sera notifié pour un remboursement partiel.", { duration: 6000 });
+        toast.success("Commande partiellement restaurÃ©e ! Le client sera notifiÃ© pour un remboursement partiel.", { duration: 6000 });
       } else {
-        toast.success("Commande restaurée et validée, facture envoyée !");
+        toast.success("Commande restaurÃ©e et validÃ©e, facture envoyÃ©e !");
       }
       fetchOrders();
     } catch (error: any) {
-      toast.error(error.message || "Erreur lors de la restauration. Stock épuisé ?");
+      toast.error(error.message || "Erreur lors de la restauration. Stock Ã©puisÃ© ?");
     } finally {
       setProcessingId(null);
     }
@@ -254,7 +254,7 @@ export default function Orders() {
       }
     }
     
-    // Filtrage par Recherche (Nom ou Numéro)
+    // Filtrage par Recherche (Nom ou NumÃ©ro)
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       const matchName = order.customers?.name?.toLowerCase().includes(term);
@@ -293,14 +293,14 @@ export default function Orders() {
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-gray-500">Gérez les achats clients et vérifiez les reçus.</p>
+          <p className="mt-1 text-sm text-gray-500">GÃ©rez les achats clients et vÃ©rifiez les reÃ§us.</p>
         </div>
         <button 
           onClick={fetchOrders}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm text-sm font-medium transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">Rafraîchir</span>
+          <span className="hidden sm:inline">RafraÃ®chir</span>
         </button>
       </div>
 
@@ -313,7 +313,7 @@ export default function Orders() {
           <input
             type="text"
             className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-            placeholder="Rechercher par nom de client ou n° de commande (ex: TZ-26...)"
+            placeholder="Rechercher par nom de client ou nÂ° de commande (ex: TZ-26...)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -328,10 +328,10 @@ export default function Orders() {
         </div>
       </div>
 
-      <div className="flex space-x-1 bg-white p-1 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 bg-white p-1 rounded-xl shadow-sm border border-gray-100">
         <button
           onClick={() => setActiveTab('ALL')}
-          className={`flex-1 min-w-[120px] px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+          className={`px-2 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
             activeTab === 'ALL' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
           }`}
         >
@@ -339,7 +339,7 @@ export default function Orders() {
         </button>
         <button
           onClick={() => setActiveTab('PAYMENT_PENDING')}
-          className={`flex-1 min-w-[120px] px-4 py-2.5 text-sm font-medium rounded-lg transition-colors flex justify-center items-center gap-2 ${
+          className={`px-2 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors flex justify-center items-center gap-1 sm:gap-2 ${
             activeTab === 'PAYMENT_PENDING' ? 'bg-yellow-50 text-yellow-700' : 'text-gray-500 hover:text-yellow-600 hover:bg-yellow-50/50'
           }`}
         >
@@ -347,23 +347,23 @@ export default function Orders() {
         </button>
         <button
           onClick={() => setActiveTab('PAID')}
-          className={`flex-1 min-w-[120px] px-4 py-2.5 text-sm font-medium rounded-lg transition-colors flex justify-center items-center gap-2 ${
+          className={`px-2 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors flex justify-center items-center gap-2 ${
             activeTab === 'PAID' ? 'bg-green-50 text-green-700' : 'text-gray-500 hover:text-green-600 hover:bg-green-50/50'
           }`}
         >
-          Validées
+          ValidÃ©es
         </button>
         <button
           onClick={() => setActiveTab('EXPIRED')}
-          className={`flex-1 min-w-[120px] px-4 py-2.5 text-sm font-medium rounded-lg transition-colors flex justify-center items-center gap-2 ${
+          className={`px-2 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors flex justify-center items-center gap-2 ${
             activeTab === 'EXPIRED' ? 'bg-red-50 text-red-700' : 'text-gray-500 hover:text-red-600 hover:bg-red-50/50'
           }`}
         >
-          Expirées
+          ExpirÃ©es
         </button>
         <button
           onClick={() => setActiveTab('REJECTED')}
-          className={`flex-1 min-w-[120px] px-4 py-2.5 text-sm font-medium rounded-lg transition-colors flex justify-center items-center gap-2 ${
+          className={`px-2 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors flex justify-center items-center gap-2 ${
             activeTab === 'REJECTED' ? 'bg-purple-50 text-purple-700' : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50/50'
           }`}
         >
@@ -391,11 +391,11 @@ export default function Orders() {
                       (order.status === 'COMPLETED' || order.status === 'PAID') ? 'bg-green-100 text-green-800' :
                       'bg-red-100 text-red-800'
                     }`}>
-                      {order.status === 'PAYMENT_PENDING' ? 'En Attente' : (order.status === 'COMPLETED' || order.status === 'PAID') ? 'Payée' : 'Expirée'}
+                      {order.status === 'PAYMENT_PENDING' ? 'En Attente' : (order.status === 'COMPLETED' || order.status === 'PAID') ? 'PayÃ©e' : 'ExpirÃ©e'}
                     </span>
                   </div>
                   <p className="text-sm font-medium">{order.customers?.name || 'Client Inconnu'}</p>
-                  <p className="text-sm text-gray-500">{order.customers?.email} • {order.customers?.phone}</p>
+                  <p className="text-sm text-gray-500">{order.customers?.email} â€¢ {order.customers?.phone}</p>
                   <p className="text-xs text-gray-400">{new Date(order.created_at).toLocaleString('fr-FR')}</p>
                 </div>
 
@@ -414,15 +414,15 @@ export default function Orders() {
 
                 {/* Paiement & Actions */}
                 <div className="flex-1 border-t md:border-t-0 md:border-l border-gray-100 pt-3 md:pt-0 md:pl-5 flex flex-col justify-center">
-                  <p className="text-xs text-gray-500 mb-1.5">Méthode : <span className="font-bold text-gray-700 uppercase">{order.payment_method}</span></p>
+                  <p className="text-xs text-gray-500 mb-1.5">MÃ©thode : <span className="font-bold text-gray-700 uppercase">{order.payment_method}</span></p>
                   
                   {order.receipt_url ? (
                     <a href={order.receipt_url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:text-blue-800 text-xs font-medium mb-3">
                       <ExternalLink className="w-3.5 h-3.5 mr-1" />
-                      Voir le reçu
+                      Voir le reÃ§u
                     </a>
                   ) : (
-                    <p className="text-xs text-gray-400 italic mb-3">Aucun reçu uploadé.</p>
+                    <p className="text-xs text-gray-400 italic mb-3">Aucun reÃ§u uploadÃ©.</p>
                   )}
 
                   {order.status === 'PAYMENT_PENDING' && (
@@ -447,13 +447,13 @@ export default function Orders() {
                   )}
                   {(order.status === 'COMPLETED' || order.status === 'PAID') && (
                     <div className="flex items-center text-green-600 font-medium text-xs">
-                      <CheckCircle className="w-4 h-4 mr-1" /> Commande validée
+                      <CheckCircle className="w-4 h-4 mr-1" /> Commande validÃ©e
                     </div>
                   )}
                   {(order.status === 'EXPIRED' || order.status === 'REJECTED') && (
                     <div className="flex flex-col gap-1.5 w-full">
                       <div className="flex items-center text-red-600 font-medium text-xs mb-1">
-                        <XCircle className="w-4 h-4 mr-1" /> {order.status === 'REJECTED' ? 'Preuve non fiable' : 'Expirée (Stock libéré)'}
+                        <XCircle className="w-4 h-4 mr-1" /> {order.status === 'REJECTED' ? 'Preuve non fiable' : 'ExpirÃ©e (Stock libÃ©rÃ©)'}
                       </div>
                       <button 
                         onClick={() => handleRestoreOrder(order.id)}

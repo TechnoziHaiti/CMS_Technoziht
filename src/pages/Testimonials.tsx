@@ -103,7 +103,7 @@ export default function Testimonials() {
                   </div>
                 )}
 
-                <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-white/80 p-1 rounded-lg backdrop-blur-sm">
+                <div className="absolute top-4 right-4 flex space-x-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10 bg-white/80 dark:bg-gray-800/80 p-1 rounded-lg backdrop-blur-sm">
                   {isPending ? (
                     <>
                       <button onClick={() => handleApprove(testimonial)} className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors" title="Valider et Publier">

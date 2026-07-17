@@ -444,8 +444,9 @@ export default function Messages() {
 
             {/* Thread header */}
             <div className="flex flex-col border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-              <div className="flex items-center gap-3 px-4 py-3">
-                <button
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto min-w-0">
+                  <button
                   onClick={() => setSelectedMessage(null)}
                   className="md:hidden p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg"
                 >
@@ -465,7 +466,8 @@ export default function Messages() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end sm:justify-start mt-2 sm:mt-0">
                   <span className="hidden sm:inline-flex items-center px-2 py-1 text-[11px] font-semibold bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/30 rounded">
                     <Tag className="w-3 h-3 mr-1" />{selectedMessage.service}
                   </span>

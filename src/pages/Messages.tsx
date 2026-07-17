@@ -466,6 +466,7 @@ export default function Messages() {
                     )}
                   </div>
                 </div>
+                </div>
                 
                 <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end sm:justify-start mt-2 sm:mt-0">
                   <span className="hidden sm:inline-flex items-center px-2 py-1 text-[11px] font-semibold bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/30 rounded">

@@ -73,7 +73,9 @@ export default function SettingsPage() {
   const [showPermissionsPicker, setShowPermissionsPicker] = useState(false);
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [showFormPwd, setShowFormPwd] = useState(false);
   const [savingPwd, setSavingPwd] = useState(false);
@@ -183,14 +185,30 @@ export default function SettingsPage() {
   };
 
   const handleSavePassword = async () => {
+    if (newPassword !== confirmPassword) { toast.error('Les mots de passe ne correspondent pas.'); return; }
     if (myPwdStrength.label !== 'Robuste') { toast.error('Mot de passe trop faible.'); return; }
     setSavingPwd(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user?.email || '',
+      password: oldPassword
+    });
+
+    if (signInError) {
+      toast.error('Ancien mot de passe incorrect.');
+      setSavingPwd(false);
+      return;
+    }
+
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setSavingPwd(false);
     if (error) { toast.error(error.message); } else {
       toast.success('Mot de passe mis à jour');
       setShowPasswordModal(false);
+      setOldPassword('');
       setNewPassword('');
+      setConfirmPassword('');
       setShowPwd(false);
     }
   };
@@ -529,28 +547,51 @@ export default function SettingsPage() {
                 <KeyRound className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Nouveau mot de passe</h3>
               </div>
-              <button onClick={() => { setShowPasswordModal(false); setNewPassword(''); setShowPwd(false); }} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors">
+              <button onClick={() => { setShowPasswordModal(false); setOldPassword(''); setNewPassword(''); setConfirmPassword(''); setShowPwd(false); }} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nouveau mot de passe</label>
-                <div className="relative">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Ancien mot de passe</label>
+                <div className="relative mb-3">
                   <input
                     type={showPwd ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
+                    value={oldPassword}
+                    onChange={e => setOldPassword(e.target.value)}
                     className={`${inputClass} pr-10`}
-                    placeholder="Ex: Secur1t€!"
+                    placeholder="Votre mot de passe actuel"
                     autoFocus
                   />
                   <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                     {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nouveau mot de passe</label>
+                <div className="relative mb-3">
+                  <input
+                    type={showPwd ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className={`${inputClass} pr-10`}
+                    placeholder="Ex: Secur1t€!"
+                  />
+                </div>
+                
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Confirmer le nouveau mot de passe</label>
+                <div className="relative">
+                  <input
+                    type={showPwd ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    className={`${inputClass} pr-10`}
+                    placeholder="Confirmez le nouveau mot de passe"
+                  />
+                </div>
+
                 {newPassword.length > 0 && (
-                  <div className="mt-2 flex items-center gap-3">
+                  <div className="mt-3 flex items-center gap-3">
                     <div className="flex-1 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div className={`h-full rounded-full transition-all duration-300 ${myPwdStrength.color}`} style={{ width: myPwdStrength.w }} />
                     </div>
@@ -560,7 +601,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <div className="px-5 py-3 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
-              <button onClick={() => { setShowPasswordModal(false); setNewPassword(''); setShowPwd(false); }} className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors">
+              <button onClick={() => { setShowPasswordModal(false); setOldPassword(''); setNewPassword(''); setConfirmPassword(''); setShowPwd(false); }} className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors">
                 Annuler
               </button>
               <button

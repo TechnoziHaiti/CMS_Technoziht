@@ -181,30 +181,30 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
         {cards.map((card) => (
           <div key={card.name} className="bg-white dark:bg-[#1e293b] overflow-hidden shadow-sm rounded-xl border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow flex flex-col">
-            <div className="p-5 flex-1">
+            <div className="p-3 sm:p-5 flex-1">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div>
-                    <card.icon className={`h-8 w-8 ${card.color}`} aria-hidden="true" />
+                    <card.icon className={`h-6 w-6 sm:h-8 sm:w-8 ${card.color}`} aria-hidden="true" />
                   </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-3 sm:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{card.name}</dt>
+                    <dt className="text-[11px] sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{card.name}</dt>
                     <dd>
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white">{card.count}</div>
+                      <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{card.count}</div>
                     </dd>
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-800/50 px-5 py-3 border-t border-gray-100 dark:border-gray-800">
-              <div className="text-sm">
+            <div className="bg-gray-50 dark:bg-gray-800/50 px-3 py-2 sm:px-5 sm:py-3 border-t border-gray-100 dark:border-gray-800">
+              <div className="text-[11px] sm:text-sm">
                 <Link to={card.link} className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 flex items-center">
-                  Gérer <ArrowRight className="ml-1 w-4 h-4" />
+                  Gérer <ArrowRight className="ml-1 w-3 h-3 sm:w-4 sm:h-4" />
                 </Link>
               </div>
             </div>

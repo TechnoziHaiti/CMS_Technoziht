@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 
-const envFile = fs.readFileSync('.env.local', 'utf8');
+const envFile = fs.readFileSync('../.env.local', 'utf8');
 const envVars = envFile.split('\n').reduce((acc, line) => {
   const match = line.match(/^([^=]+)=(.*)$/);
   if (match) acc[match[1].trim()] = match[2].trim();

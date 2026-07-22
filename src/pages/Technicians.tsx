@@ -117,7 +117,7 @@ export default function Technicians() {
       const { data: interventions, error } = await supabaseAdmin
         .from('contact_messages')
         .select('id, assignment_status, status')
-        .eq('technician_id', tech.id);
+        .contains('technician_ids', [tech.id]);
         
       if (!error && interventions) {
         const ongoing = interventions.filter(i => i.assignment_status === 'ASSIGNED' && i.status !== 'RESOLVED').length;
@@ -129,7 +129,7 @@ export default function Technicians() {
       const { data: history, error: historyErr } = await supabaseAdmin
         .from('contact_messages')
         .select('*, message_history(*)')
-        .eq('technician_id', tech.id)
+        .contains('technician_ids', [tech.id])
         .order('scheduled_at', { ascending: false });
         
       if (!historyErr) setTechHistory(history || []);
@@ -358,13 +358,21 @@ export default function Technicians() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Adresse</label>
                 <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2.5 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Statut Initial</label>
-                <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as any})} className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2.5 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
-                  <option value="AVAILABLE">Disponible</option>
-                  <option value="INACTIVE">Inactif</option>
-                </select>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Statut Initial</label>
+                  <select 
+                    value={formData.status} 
+                    onChange={e => setFormData({...formData, status: e.target.value as any})} 
+                    disabled={formData.status === 'BUSY'}
+                    className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2.5 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <option value="AVAILABLE">Disponible</option>
+                    <option value="INACTIVE">Inactif</option>
+                    {formData.status === 'BUSY' && <option value="BUSY">Occupé (En intervention)</option>}
+                  </select>
+                  {formData.status === 'BUSY' && (
+                    <p className="text-xs text-amber-600 mt-1">Ce technicien est actuellement en intervention. Son statut redeviendra disponible automatiquement à la clôture du ticket.</p>
+                  )}
+                </div>
             </div>
             <div className="mt-8 flex justify-end gap-3">
               <button type="button" onClick={() => setViewMode('LIST')} className="px-5 py-2.5 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 font-medium">

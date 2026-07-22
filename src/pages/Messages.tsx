@@ -32,13 +32,13 @@ type ContactMessage = {
   phone: string;
   service: string;
   message: string;
-  status: 'UNREAD' | 'READ';
+  status: 'UNREAD' | 'READ' | 'RESOLVED';
   created_at: string;
-  technician_id?: string;
+  technician_ids?: string[];
   priority?: string;
   scheduled_at?: string;
   assignment_status?: string;
-  technicians?: Technician;
+  technicians?: Technician[];
   message_history?: {
     id: string;
     action: string;
@@ -86,7 +86,7 @@ export default function Messages() {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [techSearch, setTechSearch] = useState('');
-  const [selectedTechForAssign, setSelectedTechForAssign] = useState<Technician | null>(null);
+  const [selectedTechsForAssign, setSelectedTechsForAssign] = useState<Technician[]>([]);
   const [assignForm, setAssignForm] = useState({ date: '', time: '', priority: 'NORMAL' });
   const [assigning, setAssigning] = useState(false);
 
@@ -97,7 +97,7 @@ export default function Messages() {
         .from('contact_messages')
         .select(`
           *,
-          technicians (*),
+          
           message_history (*)
         `)
         .order('created_at', { ascending: false });
@@ -231,46 +231,86 @@ export default function Messages() {
     }
   };
 
-  const handleAssign = async () => {
-    if (!selectedTechForAssign || !assignForm.date || !assignForm.time || !selectedMessage) {
-      toast.error('Veuillez remplir tous les champs');
-      return;
-    }
 
-    setAssigning(true);
+  const handleResolve = async () => {
+    if (!selectedMessage) return;
+    
     try {
       // 1. Update Message
-      const scheduledDateTime = `${assignForm.date}T${assignForm.time}:00`;
       await db.from('contact_messages').update({
-        technician_id: selectedTechForAssign.id,
-        priority: assignForm.priority,
-        scheduled_at: scheduledDateTime,
-        assignment_status: 'ASSIGNED'
+        status: 'RESOLVED',
       }).eq('id', selectedMessage.id);
 
-      // 2. Update Technician status to BUSY
-      await db.from('technicians').update({ status: 'BUSY' }).eq('id', selectedTechForAssign.id);
+      // 2. Update Technician statuses to AVAILABLE
+      if (selectedMessage.technician_ids && selectedMessage.technician_ids.length > 0) {
+        await db.from('technicians').update({ status: 'AVAILABLE' }).in('id', selectedMessage.technician_ids);
+      }
 
       // 3. Log History
       await db.from('message_history').insert({
         message_id: selectedMessage.id,
-        action: selectedMessage.technician_id ? 'REASSIGNED' : 'ASSIGNED',
+        action: 'RESOLVED',
         actor_email: user?.email || 'Admin',
         details: {
-          technician_name: `${selectedTechForAssign.first_name} ${selectedTechForAssign.last_name}`,
-          priority: assignForm.priority,
-          scheduled_at: scheduledDateTime
+          note: 'Intervention terminée'
         }
       });
 
-      // 4. Send Email via Backend
+      toast.success('Intervention terminée avec succès', { icon: '✅' });
+      fetchMessages();
+      setSelectedMessage(prev => prev ? { ...prev, status: 'RESOLVED' } : null);
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur lors de la clôture');
+    }
+  };
+
+  const handleAssign = async () => {
+    if (selectedTechsForAssign.length === 0 || !assignForm.date || !assignForm.time || !selectedMessage) {
+      toast.error('Veuillez remplir tous les champs');
+      return;
+    }
+    
+    setAssigning(true);
+    try {
+      const newIds = selectedTechsForAssign.map(t => t.id);
+      const oldIds = selectedMessage.technician_ids || [];
+      const toRelease = oldIds.filter(id => !newIds.includes(id));
+      const toBusy = newIds.filter(id => !oldIds.includes(id));
+
+      if (toRelease.length > 0) {
+        await db.from('technicians').update({ status: 'AVAILABLE' }).in('id', toRelease);
+      }
+      if (toBusy.length > 0) {
+        await db.from('technicians').update({ status: 'BUSY' }).in('id', toBusy);
+      }
+
+      const scheduledDateTime = `${assignForm.date}T${assignForm.time}:00`;
+      await db.from('contact_messages').update({
+        technician_ids: newIds,
+        priority: assignForm.priority,
+        scheduled_at: scheduledDateTime,
+        assignment_status: 'ASSIGNED',
+        status: 'UNREAD'
+      }).eq('id', selectedMessage.id);
+
+      await db.from('message_history').insert({
+        message_id: selectedMessage.id,
+        action: oldIds.length > 0 ? 'REASSIGNED' : 'ASSIGNED',
+        actor_email: user?.email || 'Admin',
+        details: {
+          technician: selectedTechsForAssign.map(t => `${t.first_name} ${t.last_name}`).join(', '),
+          date: scheduledDateTime,
+          priority: assignForm.priority
+        }
+      });
+
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5005';
-      const res = await fetch(`${API_URL}/api/admin/assign-technician`, {
+      await fetch(`${API_URL}/api/admin/assign-technician`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messageId: selectedMessage.id,
-          technician: selectedTechForAssign,
+          technician: selectedTechsForAssign[0],
           clientInfo: {
             name: selectedMessage.name,
             phone: selectedMessage.phone,
@@ -286,17 +326,12 @@ export default function Messages() {
         }),
       });
 
-      if (!res.ok) {
-        toast('Technicien assigné mais erreur d\'envoi email.', { icon: '⚠️' });
-      } else {
-        toast.success('Ordre de mission envoyé !');
-      }
-
+      toast.success('Équipe assignée avec succès', { icon: '🧑‍🔧' });
       setShowAssignModal(false);
-      fetchMessages(); // Refresh UI
-      
-    } catch (e: any) {
-      toast.error('Erreur lors de l\'assignation: ' + e.message);
+      fetchMessages();
+      fetchTechnicians();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'assignation");
     } finally {
       setAssigning(false);
     }
@@ -305,9 +340,9 @@ export default function Messages() {
   const openAssignModal = () => {
     if (selectedMessage?.technician_id) {
       const currentTech = technicians.find(t => t.id === selectedMessage.technician_id);
-      if (currentTech) setSelectedTechForAssign(currentTech);
+      if (currentTech) setSelectedTechsForAssign([currentTech]);
     } else {
-      setSelectedTechForAssign(null);
+      setSelectedTechsForAssign([]);
     }
     
     // Preset Date to Tomorrow if not set
@@ -333,10 +368,10 @@ export default function Messages() {
 
   const filteredTechs = technicians.filter(t => 
     t.status !== 'INACTIVE' &&
-    (t.first_name.toLowerCase().includes(techSearch.toLowerCase()) ||
-     t.last_name.toLowerCase().includes(techSearch.toLowerCase()) ||
-     t.specialty.toLowerCase().includes(techSearch.toLowerCase()) ||
-     t.department.toLowerCase().includes(techSearch.toLowerCase()))
+    ((t.first_name || '').toLowerCase().includes(techSearch.toLowerCase()) ||
+     (t.last_name || '').toLowerCase().includes(techSearch.toLowerCase()) ||
+     (t.specialty || '').toLowerCase().includes(techSearch.toLowerCase()) ||
+     (t.department || '').toLowerCase().includes(techSearch.toLowerCase()))
   );
 
   return (
@@ -472,13 +507,22 @@ export default function Messages() {
                   <span className="hidden sm:inline-flex items-center px-2 py-1 text-[11px] font-semibold bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/30 rounded">
                     <Tag className="w-3 h-3 mr-1" />{selectedMessage.service}
                   </span>
-                  <button
-                    onClick={openAssignModal}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-lg transition-colors border border-blue-200 dark:border-blue-800/50"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    {selectedMessage.assignment_status === 'ASSIGNED' ? 'Réassigner' : 'Assigner'}
-                  </button>
+                    {selectedMessage.assignment_status === 'ASSIGNED' && selectedMessage.status !== 'RESOLVED' && (
+                      <button
+                        onClick={handleResolve}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 rounded-lg transition-colors border border-green-200 dark:border-green-800/50"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Terminer
+                      </button>
+                    )}
+                    <button
+                      onClick={openAssignModal}
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-lg transition-colors border border-blue-200 dark:border-blue-800/50"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      {selectedMessage.assignment_status === 'ASSIGNED' ? 'Réassigner' : 'Assigner'}
+                    </button>
                   <button
                     onClick={() => setSelectedMessage(null)}
                     className="p-1.5 ml-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors hidden sm:block"
@@ -489,25 +533,35 @@ export default function Messages() {
               </div>
 
               {/* Technician Assigned Banner */}
-              {selectedMessage.assignment_status === 'ASSIGNED' && selectedMessage.technicians && (
-                <div className="bg-blue-50/50 dark:bg-blue-900/10 px-4 py-2 flex items-center gap-3 border-t border-blue-100 dark:border-blue-900/30">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
-                    {selectedMessage.technicians.first_name?.[0] || ''}{selectedMessage.technicians.last_name?.[0] || ''}
+              {selectedMessage.assignment_status === 'ASSIGNED' && selectedMessage.technician_ids && selectedMessage.technician_ids.length > 0 && (
+                  <div className="bg-blue-50/50 dark:bg-blue-900/10 px-4 py-2 flex flex-col gap-3 border-t border-blue-100 dark:border-blue-900/30">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                        Prévu le : {new Date(selectedMessage.scheduled_at!).toLocaleDateString('fr-FR')} à {selectedMessage.scheduled_at!.split('T')[1].substring(0,5)} • <span className="font-bold text-amber-600 dark:text-amber-500">{selectedMessage.priority === 'HIGH' ? 'HAUTE' : selectedMessage.priority === 'URGENT' ? 'URGENTE' : 'NORMALE'}</span>
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">Équipe assignée :</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedMessage.technician_ids.map(techId => {
+                          const tech = technicians.find(t => t.id === techId);
+                          if (!tech) return null;
+                          return (
+                            <div key={tech.id} className="flex items-center gap-2 bg-white dark:bg-gray-800 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700">
+                               <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-[10px]">
+                                 {tech.first_name?.[0] || ''}{tech.last_name?.[0] || ''}
+                               </div>
+                               <div>
+                                 <p className="text-xs font-medium">{tech.first_name} {tech.last_name}</p>
+                                 <p className="text-[10px] text-gray-500">{tech.phone}</p>
+                               </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">
-                      Technicien: {selectedMessage.technicians.first_name} {selectedMessage.technicians.last_name}
-                    </p>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                      <span>{selectedMessage.technicians.phone}</span>
-                      <span>•</span>
-                      <span>Prévu le : {new Date(selectedMessage.scheduled_at!).toLocaleDateString('fr-FR')} à {selectedMessage.scheduled_at!.split('T')[1].substring(0,5)}</span>
-                      <span>•</span>
-                      <span className="font-bold text-amber-600 dark:text-amber-500">{selectedMessage.priority}</span>
-                    </p>
-                  </div>
-                </div>
-              )}
+                )}
             </div>
 
             {/* Thread messages & History */}
@@ -642,38 +696,49 @@ export default function Messages() {
                     {filteredTechs.map(tech => (
                       <div 
                         key={tech.id} 
-                        onClick={() => setSelectedTechForAssign(tech)}
+                        onClick={() => setSelectedTechsForAssign(prev => prev.find(t => t.id === tech.id) ? prev.filter(t => t.id !== tech.id) : [...prev, tech])}
                         className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                          selectedTechForAssign?.id === tech.id 
+                          selectedTechsForAssign.some(t => t.id === tech.id) 
                             ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 ring-1 ring-blue-500' 
                             : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
                         }`}
                       >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300">
-                              {tech.first_name[0]}{tech.last_name[0]}
+                        <div className="flex justify-between items-start">
+                            <div className="flex gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex shrink-0 items-center justify-center font-bold text-gray-600 dark:text-gray-300">
+                                {tech.first_name?.[0] || ''}{tech.last_name?.[0] || ''}
+                              </div>
+                              <div className="flex flex-col">
+                                <p className="font-semibold text-sm text-gray-900 dark:text-white">{tech.first_name} {tech.last_name}</p>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{tech.department} • {tech.specialty}</p>
+                                
+                                <div className="flex flex-col gap-1.5 mt-2.5">
+                                  <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                                    <Mail className="w-3.5 h-3.5 text-gray-400" />
+                                    <span className="truncate max-w-[200px]">{tech.email}</span>
+                                  </div>
+                                  {tech.phone && (
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                                      <Phone className="w-3.5 h-3.5 text-gray-400" />
+                                      <span>{tech.phone}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-semibold text-gray-900 dark:text-white">{tech.first_name} {tech.last_name}</p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">{tech.department} • {tech.specialty}</p>
+                            <div className="shrink-0 mt-1">
+                              {tech.status === 'AVAILABLE' ? (
+                                <span className="flex w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_0_2px_white] dark:shadow-[0_0_0_2px_#1e293b]" title="Disponible"></span>
+                              ) : (
+                                <span className="flex w-2.5 h-2.5 bg-yellow-500 rounded-full shadow-[0_0_0_2px_white] dark:shadow-[0_0_0_2px_#1e293b]" title="Occupé"></span>
+                              )}
                             </div>
                           </div>
-                          {tech.status === 'AVAILABLE' ? (
-                            <span className="w-3 h-3 bg-green-500 rounded-full border border-white" title="Disponible"></span>
-                          ) : (
-                            <span className="w-3 h-3 bg-yellow-500 rounded-full border border-white" title="Occupé"></span>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400 mt-3">
-                          <span className="flex items-center gap-1"><Mail className="w-3 h-3"/> {tech.email}</span>
-                          {tech.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3"/> {tech.phone}</span>}
-                        </div>
                       </div>
                     ))}
                   </div>
 
-                  {selectedTechForAssign && (
+                  {selectedTechsForAssign.length > 0 && (
                     <div className="p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-800">
                       <h3 className="text-sm font-semibold mb-4 text-gray-900 dark:text-white">Détails de planification</h3>
                       <div className="grid grid-cols-2 gap-4 mb-4">

@@ -53,7 +53,7 @@ CREATE TABLE public.reservation_tokens (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
-CREATE TABLE public.stock_movements (
+CREATE TABLE public. stock_movements (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     product_id UUID REFERENCES public.products(id),
     quantity_change INT NOT NULL,

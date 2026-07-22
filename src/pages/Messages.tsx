@@ -338,9 +338,9 @@ export default function Messages() {
   };
 
   const openAssignModal = () => {
-    if (selectedMessage?.technician_id) {
-      const currentTech = technicians.find(t => t.id === selectedMessage.technician_id);
-      if (currentTech) setSelectedTechsForAssign([currentTech]);
+    if (selectedMessage?.technician_ids?.length) {
+      const currentTechs = technicians.filter(t => selectedMessage.technician_ids!.includes(t.id));
+      if (currentTechs.length > 0) setSelectedTechsForAssign(currentTechs);
     } else {
       setSelectedTechsForAssign([]);
     }

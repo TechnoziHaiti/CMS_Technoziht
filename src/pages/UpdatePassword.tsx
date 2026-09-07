@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function UpdatePassword() {
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
 
   const getPasswordStrength = (p: string) => {
@@ -31,7 +32,7 @@ export default function UpdatePassword() {
     // Supabase va automatiquement créer une session via le token de l'url (#access_token)
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!session && !window.location.hash.includes('access_token')) {
         toast.error('Lien de réinitialisation invalide ou expiré.');
         navigate('/login');
       }
@@ -53,11 +54,14 @@ export default function UpdatePassword() {
     });
 
     if (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Erreur lors de la mise à jour du mot de passe');
       setLoading(false);
     } else {
-      toast.success('Mot de passe mis à jour avec succès');
-      navigate('/');
+      setIsSuccess(true);
+      toast.success('Mot de passe mis à jour avec succès !');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2500);
     }
   };
 
@@ -67,62 +71,88 @@ export default function UpdatePassword() {
         <div className="text-center">
           <img src="/logo.png" alt="Technozi Haiti" className="h-12 w-auto mx-auto object-contain mb-6" />
           <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
-            Nouveau mot de passe
+            {isSuccess ? 'Mot de passe mis à jour !' : 'Nouveau mot de passe'}
           </h2>
           <p className="mt-2 text-sm text-gray-500">
-            Veuillez définir un mot de passe robuste.
+            {isSuccess 
+              ? 'Votre mot de passe a été enregistré avec succès.' 
+              : 'Veuillez définir un mot de passe robuste.'}
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleUpdatePassword}>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Nouveau mot de passe
-            </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-3 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="Ex: Secur1t€!"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center focus:outline-none"
-              >
-                <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showPassword ? 'bg-gray-800' : 'bg-gray-200'}`}>
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showPassword ? 'translate-x-6' : 'translate-x-1'}`} />
-                </div>
-              </button>
-            </div>
-            
-            {newPassword.length > 0 && (
-              <div className="mt-2">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs text-gray-500">Robustesse</span>
-                  <span className={`text-xs font-bold ${strength.color.replace('bg-', 'text-')}`}>{strength.label}</span>
-                </div>
-                <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
-                  <div className={`h-full transition-all duration-300 ${strength.color}`} style={{ width: strength.w }}></div>
-                </div>
-              </div>
-            )}
-          </div>
 
-          <div>
+        {isSuccess ? (
+          <div className="text-center py-4 space-y-6">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-800">
+                Changement enregistré avec succès !
+              </p>
+              <p className="text-xs text-gray-500">
+                Vous allez être redirigé vers la page de connexion...
+              </p>
+            </div>
             <button
-              type="submit"
-              disabled={loading || newPassword.length === 0}
-              className="w-full flex justify-center items-center gap-2 py-2.5 px-4 text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              type="button"
+              onClick={() => navigate('/login')}
+              className="w-full py-2.5 px-4 text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none transition-colors"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              Enregistrer
+              Se connecter maintenant
             </button>
           </div>
-        </form>
+        ) : (
+          <form className="mt-8 space-y-6" onSubmit={handleUpdatePassword}>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Nouveau mot de passe
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  className="appearance-none rounded-lg relative block w-full px-3 py-3 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="Ex: Secur1t€!"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center focus:outline-none"
+                >
+                  <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showPassword ? 'bg-gray-800' : 'bg-gray-200'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showPassword ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </div>
+                </button>
+              </div>
+              
+              {newPassword.length > 0 && (
+                <div className="mt-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs text-gray-500">Robustesse</span>
+                    <span className={`text-xs font-bold ${strength.color.replace('bg-', 'text-')}`}>{strength.label}</span>
+                  </div>
+                  <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
+                    <div className={`h-full transition-all duration-300 ${strength.color}`} style={{ width: strength.w }}></div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={loading || newPassword.length === 0}
+                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Enregistrer
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

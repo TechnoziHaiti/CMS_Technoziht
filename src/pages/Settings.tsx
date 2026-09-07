@@ -5,21 +5,16 @@ import toast from 'react-hot-toast';
 import {
   Loader2, Trash2, AlertCircle, Pencil, X, Shield, ShieldCheck,
   KeyRound, Eye, EyeOff, Check, UserPlus, Moon, Sun,
-  LayoutDashboard, Home, Briefcase, FolderGit2, Package,
-  ShoppingBag, MessageSquareQuote, AppWindow, Mail, Crown, ChevronDown, ChevronUp
+  LayoutDashboard, Briefcase, MessageSquareQuote, AppWindow, User, Crown, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
 const ALL_SECTIONS = [
   { key: 'Dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
-  { key: 'Accueil',      label: 'Accueil',       icon: Home },
   { key: 'Services',     label: 'Services',      icon: Briefcase },
-  { key: 'Réalisations', label: 'Réalisations',  icon: FolderGit2 },
-  { key: 'Produits',     label: 'Produits',       icon: Package },
-  { key: 'Commandes',    label: 'Commandes',      icon: ShoppingBag },
   { key: 'Témoignages',  label: 'Témoignages',   icon: MessageSquareQuote },
+  { key: 'Techniciens',  label: 'Techniciens',   icon: User },
   { key: 'Pied de page', label: 'Pied de page',  icon: AppWindow },
-  { key: 'Messages',     label: 'Messages',       icon: Mail },
 ];
 
 type UserData = {

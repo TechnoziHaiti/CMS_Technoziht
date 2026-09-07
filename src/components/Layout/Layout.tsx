@@ -2,14 +2,9 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { 
   LayoutDashboard, 
-  Home,
   Settings, 
   Briefcase, 
-  FolderGit2, 
-  Package,
-  ShoppingBag,
   MessageSquareQuote, 
-  Mail, 
   LogOut,
   AppWindow,
   Menu,
@@ -19,7 +14,6 @@ import {
   User
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Toaster } from 'react-hot-toast';
 import { createClient } from '@supabase/supabase-js';
 import AutoLogout from '../AutoLogout';
 
@@ -31,15 +25,10 @@ const db = createClient(SUPABASE_URL, SERVICE_KEY, {
 
 const ALL_NAV_ITEMS = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-  { name: 'Accueil', path: '/home', icon: Home },
   { name: 'Services', path: '/services', icon: Briefcase },
-  { name: 'Réalisations', path: '/projects', icon: FolderGit2 },
-  { name: 'Produits', path: '/products', icon: Package },
-  { name: 'Commandes', path: '/orders', icon: ShoppingBag },
   { name: 'Témoignages', path: '/testimonials', icon: MessageSquareQuote },
   { name: 'Techniciens', path: '/technicians', icon: User },
   { name: 'Pied de page', path: '/footer', icon: AppWindow },
-  { name: 'Messages', path: '/messages', icon: Mail },
 ];
 
 export default function Layout() {
@@ -120,7 +109,6 @@ export default function Layout() {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-[#0f172a] text-gray-900 dark:text-gray-100 transition-colors overflow-hidden">
       <AutoLogout />
-      <Toaster position="top-right" />
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-[260px] bg-white dark:bg-[#1e293b] border-r border-gray-200 dark:border-gray-800 flex flex-col transform transition-transform duration-300 md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         
@@ -248,7 +236,6 @@ export default function Layout() {
           </div>
         </main>
       </div>
-      <Toaster position="top-right" />
     </div>
   );
 }

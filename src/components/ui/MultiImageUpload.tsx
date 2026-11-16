@@ -16,18 +16,11 @@ export default function MultiImageUpload({ value = [], onChange, bucket = 'cms-u
   const editInputRef = useRef<HTMLInputElement>(null);
 
   const processAndUploadFile = async (file: File): Promise<string> => {
-    // Demander confirmation si le fichier fait plus de 5 Mo (5 * 1024 * 1024)
-    if (file.size > 5 * 1024 * 1024) {
-      const confirmCompression = window.confirm("Cette image est assez lourde (plus de 5 Mo). Sa qualité sera légèrement réduite pour garantir la rapidité de votre site. Voulez-vous continuer ?");
-      if (!confirmCompression) {
-        throw new Error("Annulé par l'utilisateur");
-      }
-    }
-    
-    // Compression de l'image (Max 5MB)
+    // Compression et optimisation automatique de l'image (Max 600KB, format WebP haute qualité)
     const options = {
-      maxSizeMB: 4.8,
-      maxWidthOrHeight: 2048,
+      maxSizeMB: 0.6,
+      maxWidthOrHeight: 1600,
+      fileType: 'image/webp',
       useWebWorker: true
     };
     
@@ -36,16 +29,18 @@ export default function MultiImageUpload({ value = [], onChange, bucket = 'cms-u
       processedFile = await imageCompression(file, options);
     } catch (error) {
       console.error("Erreur de compression:", error);
-      toast.error("Erreur lors de la compression de l'image");
     }
 
-    const fileExt = processedFile.name.split('.').pop() || 'jpg';
+    const fileExt = 'webp';
     const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from(bucket)
-      .upload(filePath, processedFile);
+      .upload(filePath, processedFile, {
+        contentType: 'image/webp',
+        cacheControl: '31536000'
+      });
 
     if (uploadError) throw uploadError;
 

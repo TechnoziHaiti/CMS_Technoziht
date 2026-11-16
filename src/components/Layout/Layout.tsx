@@ -4,6 +4,7 @@ import {
   LayoutDashboard, 
   Settings, 
   Briefcase, 
+  Package,
   MessageSquareQuote, 
   LogOut,
   AppWindow,
@@ -26,6 +27,7 @@ const db = createClient(SUPABASE_URL, SERVICE_KEY, {
 const ALL_NAV_ITEMS = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
   { name: 'Services', path: '/services', icon: Briefcase },
+  { name: 'Produits', path: '/products', icon: Package },
   { name: 'Témoignages', path: '/testimonials', icon: MessageSquareQuote },
   { name: 'Techniciens', path: '/technicians', icon: User },
   { name: 'Pied de page', path: '/footer', icon: AppWindow },

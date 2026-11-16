@@ -18,7 +18,7 @@ Pour éviter qu'un produit ne soit survendu (notamment s'il ne reste qu'un seul 
    Lorsqu'un client passe une commande sur le site, le système vérifie la disponibilité (Stock total - Stock déjà réservé). Si le produit est disponible, la commande est créée avec le statut *En attente* et la quantité demandée est immédiatement ajoutée au `stock réservé`. 
 
 2. **Protection Anti-Doublon :**
-   Dès cet instant, le produit est verrouillé pour ce client pendant un délai imparti (ex: 30 minutes). Si un deuxième client tente d'acheter le même produit simultanément, le système affichera "Rupture de stock" ou "Quantité insuffisante", évitant toute collision.
+   Dès cet instant, le produit est verrouillépour ce client pendant un délai imparti (ex: 30 minutes). Si un deuxième client tente d'acheter le même produit simultanément, le système affichera "Rupture de stock" ou "Quantité insuffisante", évitant toute collision.
 
 3. **Validation (Côté Admin) :**
    - **Validation de la commande :** Si l'admin valide la commande (reçu de paiement fiable), le système retire définitivement la quantité du stock total et du stock réservé. La vente est actée.

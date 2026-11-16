@@ -17,7 +17,8 @@ import {
   Percent, 
   X,
   LayoutGrid,
-  List
+  List,
+  Star
 } from 'lucide-react';
 import ImageUpload from '../components/ui/ImageUpload';
 
@@ -63,6 +64,7 @@ export type Product = {
   discount_percentage?: number;
   discount_end_date?: string | null;
   created_at?: string;
+  is_featured?: boolean;
 };
 
 type ProductFormData = {
@@ -91,6 +93,10 @@ export default function Products() {
 
   // View mode: compact grid or table
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+
+  // Featured Product Confirmation State
+  const [featuredConfirmProduct, setFeaturedConfirmProduct] = useState<Product | null>(null);
+  const [isUpdatingFeatured, setIsUpdatingFeatured] = useState(false);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -185,7 +191,8 @@ export default function Products() {
     const active = products.filter(p => p.status === 'active').length;
     const inactive = products.filter(p => p.status === 'inactive').length;
     const inPromo = products.filter(p => (p.discount_percentage || 0) > 0).length;
-    return { total, active, inactive, inPromo };
+    const featured = products.filter(p => p.is_featured).length;
+    return { total, active, inactive, inPromo, featured };
   }, [products]);
 
   // Filtered products list
@@ -208,11 +215,57 @@ export default function Products() {
         matchesStatus = p.status === 'inactive';
       } else if (selectedStatus === 'PROMO') {
         matchesStatus = (p.discount_percentage || 0) > 0;
+      } else if (selectedStatus === 'FEATURED') {
+        matchesStatus = Boolean(p.is_featured);
       }
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [products, searchTerm, selectedCategory, selectedStatus]);
+
+  // Handle clicking the Featured Star
+  const handleFeaturedClick = (product: Product) => {
+    if (!product.is_featured) {
+      const currentFeaturedCount = products.filter(p => p.is_featured).length;
+      if (currentFeaturedCount >= 3) {
+        toast.error("Vous avez déjà 3 produits en vedette. Veuillez d'abord en retirer un pour pouvoir ajouter celui-ci.", { duration: 4000 });
+        return;
+      }
+    }
+    setFeaturedConfirmProduct(product);
+  };
+
+  // Confirm toggling featured status
+  const confirmToggleFeatured = async () => {
+    if (!featuredConfirmProduct) return;
+    const newStatus = !featuredConfirmProduct.is_featured;
+    setIsUpdatingFeatured(true);
+
+    try {
+      const { error } = await dbClient
+        .from('products')
+        .update({ is_featured: newStatus })
+        .eq('id', featuredConfirmProduct.id);
+
+      if (error) throw error;
+
+      setProducts(prev => prev.map(p => 
+        p.id === featuredConfirmProduct.id ? { ...p, is_featured: newStatus } : p
+      ));
+
+      if (newStatus) {
+        toast.success(`« ${featuredConfirmProduct.name} » est maintenant en vedette sur l'accueil !`);
+      } else {
+        toast.success(`« ${featuredConfirmProduct.name} » a été retiré des produits en vedette.`);
+      }
+      setFeaturedConfirmProduct(null);
+    } catch (err: any) {
+      console.error('Erreur mise en vedette:', err);
+      toast.error("Erreur lors de la mise à jour. Assurez-vous que la colonne 'is_featured' existe dans Supabase.");
+    } finally {
+      setIsUpdatingFeatured(false);
+    }
+  };
 
   const openForm = (product?: Product) => {
     if (product) {
@@ -684,7 +737,7 @@ export default function Products() {
       </div>
 
       {/* KPI Stats Cards (Streamlined Compact & Clean) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
         <div className="bg-white dark:bg-[#1e293b] p-3 rounded-lg border border-gray-200 dark:border-gray-800 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Catalogue</p>
@@ -715,6 +768,22 @@ export default function Products() {
             <p className="text-lg font-bold text-gray-900 dark:text-white mt-0.5">{stats.inPromo}</p>
           </div>
           <Percent className="w-5 h-5 text-purple-500" />
+        </div>
+
+        <div 
+          onClick={() => setSelectedStatus(selectedStatus === 'FEATURED' ? 'ALL' : 'FEATURED')}
+          className={`p-3 rounded-lg border shadow-xs flex items-center justify-between cursor-pointer transition-all ${
+            selectedStatus === 'FEATURED'
+              ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700'
+              : 'bg-white dark:bg-[#1e293b] border-gray-200 dark:border-gray-800 hover:border-amber-400'
+          }`}
+          title="Cliquer pour afficher uniquement les produits en vedette sur l'accueil"
+        >
+          <div>
+            <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">En Vedette</p>
+            <p className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-0.5">{stats.featured} / 3</p>
+          </div>
+          <Star className={`w-5 h-5 ${stats.featured > 0 ? 'fill-amber-400 text-amber-500' : 'text-gray-400'}`} />
         </div>
       </div>
 
@@ -757,6 +826,7 @@ export default function Products() {
             <option value="ACTIVE">En ligne</option>
             <option value="INACTIVE">Masqués</option>
             <option value="PROMO">En promotion</option>
+            <option value="FEATURED">⭐ En vedette ({stats.featured}/3)</option>
           </select>
 
           {/* Toggle Grille / Tableau */}
@@ -880,6 +950,18 @@ export default function Products() {
                       <td className="py-2 px-3 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
+                            type="button"
+                            onClick={() => handleFeaturedClick(product)}
+                            className={`p-1.5 rounded transition-all cursor-pointer ${
+                              product.is_featured 
+                                ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60' 
+                                : 'text-gray-300 dark:text-gray-600 hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            }`}
+                            title={product.is_featured ? "En vedette sur l'accueil (cliquer pour retirer)" : "Mettre en vedette sur l'accueil (max 3)"}
+                          >
+                            <Star className={`w-3.5 h-3.5 ${product.is_featured ? 'fill-amber-400 text-amber-500' : ''}`} />
+                          </button>
+                          <button
                             onClick={() => openForm(product)}
                             className="p-1.5 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             title="Modifier"
@@ -916,6 +998,20 @@ export default function Products() {
               >
                 {/* Image Conteneur (Épurée sans fond de couleur) */}
                 <div className="relative h-32 w-full bg-white dark:bg-[#1e293b] p-2 flex items-center justify-center border-b border-gray-100 dark:border-gray-800">
+                  {/* Bouton Étoile Vedette direct */}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleFeaturedClick(product); }}
+                    className={`absolute top-1.5 left-1.5 z-10 p-1.5 rounded-full transition-all cursor-pointer ${
+                      product.is_featured
+                        ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 hover:scale-110'
+                        : 'bg-white/90 dark:bg-gray-900/90 text-gray-400 hover:text-amber-500 hover:bg-white dark:hover:bg-gray-800 shadow-xs'
+                    }`}
+                    title={product.is_featured ? "En vedette (cliquer pour retirer)" : "Mettre en vedette sur l'accueil"}
+                  >
+                    <Star className={`w-3.5 h-3.5 ${product.is_featured ? 'fill-white' : ''}`} />
+                  </button>
+
                   {product.image_url ? (
                     <img 
                       src={product.image_url} 
@@ -1000,6 +1096,18 @@ export default function Products() {
 
                     <div className="flex items-center gap-1">
                       <button 
+                        type="button"
+                        onClick={() => handleFeaturedClick(product)} 
+                        className={`p-1 rounded transition-colors cursor-pointer ${
+                          product.is_featured 
+                            ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60' 
+                            : 'text-gray-300 dark:text-gray-600 hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }`}
+                        title={product.is_featured ? "Retirer de la vedette" : "Mettre en vedette sur l'accueil (max 3)"}
+                      >
+                        <Star className={`w-3 h-3 ${product.is_featured ? 'fill-amber-400 text-amber-500' : ''}`} />
+                      </button>
+                      <button 
                         onClick={() => openForm(product)} 
                         className="p-1 rounded text-gray-600 hover:text-blue-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-gray-800 transition-colors"
                         title="Modifier"
@@ -1020,6 +1128,70 @@ export default function Products() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Modal Confirmation Mise en vedette */}
+      {featuredConfirmProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white dark:bg-gray-900 rounded-xl max-w-sm w-full p-5 border border-gray-200 dark:border-gray-800 shadow-xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                featuredConfirmProduct.is_featured ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/50' : 'bg-blue-100 text-blue-600 dark:bg-blue-950/50'
+              }`}>
+                <Star className={`w-5 h-5 ${featuredConfirmProduct.is_featured ? 'fill-amber-500' : ''}`} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                  {featuredConfirmProduct.is_featured ? 'Retirer de la vedette ?' : 'Mettre en vedette ?'}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {featuredConfirmProduct.is_featured ? 'Accueil — Catalogue en vedette' : `Accueil — Maximum 3 produits (${stats.featured}/3 actuellement)`}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+              {featuredConfirmProduct.is_featured ? (
+                <>Souhaitez-vous retirer <strong>« {featuredConfirmProduct.name} »</strong> des 3 produits mis en avant sur la page d'accueil ?</>
+              ) : (
+                <>Souhaitez-vous afficher <strong>« {featuredConfirmProduct.name} »</strong> parmi les 3 produits mis en vedette sur la page d'accueil ?</>
+              )}
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+              <button
+                type="button"
+                onClick={() => setFeaturedConfirmProduct(null)}
+                disabled={isUpdatingFeatured}
+                className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={confirmToggleFeatured}
+                disabled={isUpdatingFeatured}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium text-white transition-colors cursor-pointer ${
+                  featuredConfirmProduct.is_featured 
+                    ? 'bg-rose-600 hover:bg-rose-700' 
+                    : 'bg-amber-500 hover:bg-amber-600'
+                }`}
+              >
+                {isUpdatingFeatured ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Mise à jour...
+                  </>
+                ) : (
+                  <>
+                    <Star className="w-3.5 h-3.5 fill-white" />
+                    {featuredConfirmProduct.is_featured ? 'Retirer' : 'Mettre en vedette'}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
